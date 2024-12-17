@@ -16,7 +16,7 @@ FILENAME_PREFIX=$(basename "$TARGET_PATH" | sed 's/-signuture//g')
 
 # Define the files to verify
 SIG_FILE="${FILENAME_PREFIX}.sig"
-TAR_FILE="${FILENAME_PREFIX}.tar"
+TAR_FILE="${FILENAME_PREFIX}.tgz"
 
 # Remote command to verify the GPG signature
 REMOTE_COMMAND="cd taurus-binaries/$TARGET_PATH && gpg --verify $SIG_FILE $TAR_FILE"
