@@ -3,6 +3,9 @@
 # Base directory
 BASE_DIR="/home/ec2-user/taurus-binaries/binaries-2024*"
 
+# List of components to validate
+COMPONENTS=("tg-validatord:" "tg-gated:" "tg-vaultd:" "tg-protect-gui:" "tg-protect-usermanager:")
+
 # Loop through all matching directories
 for FOLDER in $BASE_DIR; do
   # Dynamically find the tg-solutions directory with the version
@@ -13,34 +16,44 @@ for FOLDER in $BASE_DIR; do
   fi
 
   RELEASE_FILE="$TG_SOLUTIONS_DIR/tg-solutions/release.yaml"
-  TG_VALIDATORD_DIR=$(find "$TG_SOLUTIONS_DIR/tg-solutions" -type d -name "tg-validatord-v*" | head -n 1)
-  
-  if [[ -z "$TG_VALIDATORD_DIR" ]]; then
-    echo "tg-validatord directory not found in $TG_SOLUTIONS_DIR"
+
+  # Check if release.yaml file exists
+  if [[ ! -f "$RELEASE_FILE" ]]; then
+    echo "Missing release.yaml in folder: $FOLDER"
     continue
   fi
 
-  TG_VALIDATORD_FILE="$TG_VALIDATORD_DIR/tg-validatord"
+  # Loop over each component to check its checksum
+  for COMPONENT in "${COMPONENTS[@]}"; do
+    # Find the directory of the component
+    COMPONENT_DIR=$(find "$TG_SOLUTIONS_DIR/tg-solutions" -type d -name "$COMPONENT-v*" | head -n 1)
 
-  # Check if both files exist
-  if [[ -f "$RELEASE_FILE" && -f "$TG_VALIDATORD_FILE" ]]; then
-    echo "Processing folder: $FOLDER"
+    if [[ -z "$COMPONENT_DIR" ]]; then
+      echo "$COMPONENT directory not found in $TG_SOLUTIONS_DIR"
+      continue
+    fi
+
+    # Get the file for the component
+    COMPONENT_FILE="$COMPONENT_DIR/$COMPONENT"
 
     # Extract expected checksum from release.yaml
-    EXPECTED_CHECKSUM=$(grep "tg-validatord" "$RELEASE_FILE" | awk '{print $2}')
+    EXPECTED_CHECKSUM=$(grep "$COMPONENT" "$RELEASE_FILE" | awk '{print $2}')
 
-    # Calculate the actual checksum of tg-validatord
-    ACTUAL_CHECKSUM=$(sha256sum "$TG_VALIDATORD_FILE" | awk '{print $1}')
+    if [[ -z "$EXPECTED_CHECKSUM" ]]; then
+      echo "Checksum for $COMPONENT not found in $RELEASE_FILE"
+      continue
+    fi
+
+    # Calculate the actual checksum of the component
+    ACTUAL_CHECKSUM=$(sha256sum "$COMPONENT_FILE" | awk '{print $1}')
 
     # Compare checksums
     if [[ "$EXPECTED_CHECKSUM" == "$ACTUAL_CHECKSUM" ]]; then
-      echo "Checksums match for tg-validatord in folder: $FOLDER"
+      echo "Checksums match for $COMPONENT in folder: $FOLDER"
     else
-      echo "Checksum mismatch in folder: $FOLDER"
+      echo "Checksum mismatch for $COMPONENT in folder: $FOLDER"
       echo "Expected: $EXPECTED_CHECKSUM"
       echo "Found: $ACTUAL_CHECKSUM"
     fi
-  else
-    echo "Missing release.yaml or tg-validatord file in folder: $FOLDER"
-  fi
+  done
 done
