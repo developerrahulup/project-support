@@ -41,7 +41,7 @@ for FOLDER in $BASE_DIR; do
     fi
 
     # Extract expected checksum from release.yaml
-    EXPECTED_CHECKSUM=$(grep "$COMPONENT" "$RELEASE_FILE" | awk '{print $2}')
+    EXPECTED_CHECKSUM=$(grep "$COMPONENT:" "$RELEASE_FILE" | awk '{print $2}')
 
     if [[ -z "$EXPECTED_CHECKSUM" ]]; then
       echo "Checksum for $COMPONENT not found in $RELEASE_FILE"
