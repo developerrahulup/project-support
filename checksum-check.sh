@@ -8,10 +8,10 @@ MISSING_CHECKSUM_LOG="/home/ec2-user/missing_checksums.log"
 > "$MISSING_CHECKSUM_LOG"  # Clear previous log if exists
 
 # List of components to validate where checksum is mentioned directly in release.yaml
-COMPONENTS_DIRECT_CHECKSUM=("tg-validatord" "tg-gated" "tg-vaultd")
+COMPONENTS_DIRECT_CHECKSUM=("tg-validatord" "tg-gated" "tg-vaultd" "tg-protect-gui" "tg-protect-usermanager")
 
 # List of components where we need to check the actual checksum in release.yaml
-COMPONENTS_CHECK_ACTUAL_CHECKSUM=("tg-protect-gui" "tg-protect-usermanager")
+
 
 # Loop through all matching directories
 for FOLDER in $BASE_DIR; do
@@ -60,16 +60,6 @@ for FOLDER in $BASE_DIR; do
       echo "Found: $ACTUAL_CHECKSUM"
     fi
   done
-
-  # For components where we need to check the actual checksum in release.yaml
-  for COMPONENT in "${COMPONENTS_CHECK_ACTUAL_CHECKSUM[@]}"; do
-    # Find the file for the component
-    COMPONENT_FILE=$(find "$TG_SOLUTIONS_DIR/tg-solutions" -type f -name "$COMPONENT" | head -n 1)
-
-    if [[ -z "$COMPONENT_FILE" ]]; then
-      echo "$COMPONENT file not found in $TG_SOLUTIONS_DIR"
-      continue
-    fi
 
     # Get the actual checksum of the component file
     ACTUAL_CHECKSUM=$(sha256sum "$COMPONENT_FILE" | awk '{print $1}')
