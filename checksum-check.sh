@@ -7,16 +7,10 @@ BASE_DIR="/home/ec2-user/taurus-binaries/binaries-2024*"
 MISSING_CHECKSUM_LOG="/home/ec2-user/missing_checksums.log"
 > "$MISSING_CHECKSUM_LOG"  # Clear previous log if exists
 
-# List of components to validate where checksum is mentioned directly in release.yaml
-COMPONENTS_DIRECT_CHECKSUM=("tg-validatord" "tg-gated" "tg-vaultd" "tg-protect-gui" "tg-protect-usermanager")
-
-# List of components where we need to check the actual checksum in release.yaml
-
-
 # Loop through all matching directories
 for FOLDER in $BASE_DIR; do
-  # Dynamically find the tg-solutions directory with the version
   TG_SOLUTIONS_DIR=$(find "$FOLDER/deflate" -type d -name "tg-solutions-*-binaries-signed" | head -n 1)
+
   if [[ -z "$TG_SOLUTIONS_DIR" ]]; then
     echo "tg-solutions directory not found in $FOLDER"
     continue
@@ -30,51 +24,33 @@ for FOLDER in $BASE_DIR; do
     continue
   fi
 
-  # For components where checksum is directly mentioned in release.yaml
-  for COMPONENT in "${COMPONENTS_DIRECT_CHECKSUM[@]}"; do
-    # Find the file for the component
-    COMPONENT_FILE=$(find "$TG_SOLUTIONS_DIR/tg-solutions" -type f -name "$COMPONENT" | head -n 1)
-
-    if [[ -z "$COMPONENT_FILE" ]]; then
-      echo "$COMPONENT file not found in $TG_SOLUTIONS_DIR"
+  # Loop through each component in tg-solutions folder
+  for COMPONENT_DIR in "$TG_SOLUTIONS_DIR/tg-solutions"/*; do
+    # Skip directories that don't match the pattern
+    if [[ ! -d "$COMPONENT_DIR" ]]; then
       continue
     fi
 
-    # Extract expected checksum from release.yaml
-    EXPECTED_CHECKSUM=$(grep "$COMPONENT:" "$RELEASE_FILE" | awk '{print $2}')
+    COMPONENT=$(basename "$COMPONENT_DIR")
+    COMPONENT_FILE="$COMPONENT_DIR/$COMPONENT"
 
-    if [[ -z "$EXPECTED_CHECKSUM" ]]; then
-      echo "Checksum for $COMPONENT not found in $RELEASE_FILE"
-      continue
-    fi
-
-    # Get the actual checksum of the component file
-    ACTUAL_CHECKSUM=$(sha256sum "$COMPONENT_FILE" | awk '{print $1}')
-
-    # Compare checksums
-    if [[ "$EXPECTED_CHECKSUM" == "$ACTUAL_CHECKSUM" ]]; then
-      echo "Checksums match for $COMPONENT in folder: $FOLDER"
+    # Check if component file exists
+    if [[ -f "$COMPONENT_FILE" ]]; then
+      # Get the actual checksum of the component file
+      ACTUAL_CHECKSUM=$(sha256sum "$COMPONENT_FILE" | awk '{print $1}')
+      
+      # Check if the checksum is mentioned in the release.yaml file
+      EXPECTED_CHECKSUM=$(grep -E "$COMPONENT" "$RELEASE_FILE" | awk '{print $2}')
+      
+      if [[ -z "$EXPECTED_CHECKSUM" ]]; then
+        echo "Checksum for $COMPONENT not found in release.yaml" >> "$MISSING_CHECKSUM_LOG"
+      elif [[ "$EXPECTED_CHECKSUM" == "$ACTUAL_CHECKSUM" ]]; then
+        echo "Checksum matched for $COMPONENT in $FOLDER"
+      else
+        echo "Checksum mismatch for $COMPONENT in $FOLDER" >> "$MISSING_CHECKSUM_LOG"
+      fi
     else
-      echo "Checksum mismatch for $COMPONENT in folder: $FOLDER"
-      echo "Expected: $EXPECTED_CHECKSUM"
-      echo "Found: $ACTUAL_CHECKSUM"
-    fi
-  done
-
-    # Get the actual checksum of the component file
-    ACTUAL_CHECKSUM=$(sha256sum "$COMPONENT_FILE" | awk '{print $1}')
-
-    # Search for the checksum in release.yaml
-    EXPECTED_CHECKSUM=$(grep -oP "(?<=checksum:\s)[a-f0-9]{64}" "$RELEASE_FILE" | grep -w "$ACTUAL_CHECKSUM")
-
-    # Check if checksum is found in release.yaml
-    if [[ -z "$EXPECTED_CHECKSUM" ]]; then
-      # Checksum not found, log as missing or mismatch
-      echo "Checksum for $COMPONENT_FILE is missing or doesn't match in $RELEASE_FILE"
-      echo "$COMPONENT_FILE checksum missing or mismatched in release.yaml for folder: $FOLDER" >> "$MISSING_CHECKSUM_LOG"
-    else
-      # Checksum matches, print success message
-      echo "Checksum matched for $COMPONENT_FILE in folder: $FOLDER"
+      echo "$COMPONENT file not found in $FOLDER" >> "$MISSING_CHECKSUM_LOG"
     fi
   done
 done
