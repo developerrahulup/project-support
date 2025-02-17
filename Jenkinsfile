@@ -2,11 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // Specify the private key for SSH access to the EC2 instance
-        AWS_SSH_KEY = credentials('ec2-ssh-key')  // Use Jenkins credentials for secure handling of keys
-        EC2_PUBLIC_IP = 'your-ec2-public-ip'      // Replace with your EC2 instance's public IP
-        EC2_USER = 'ec2-user'                      // User to SSH as (e.g., ec2-user for Amazon Linux)
-        SCRIPT_PATH = '/path/to/your-script.sh'    // Path to your script on the EC2 instance
+         // AWS credentials stored in Jenkins
+        AWS_ACCESS_KEY = credentials('aws-access-key-id')    // AWS Access Key
+        AWS_SECRET_KEY = credentials('aws-secret-access-key') // AWS Secret Key
+        EC2_SSH_KEY_PATH = credentials('ec2-pem-key') // The path or content of the PEM key
+        EC2_PUBLIC_IP = '10.56.71.118'     // Public IP of EC2 instance
+        SCRIPT_PATH = './gpg-checksum-check.sh'    // Path to your script on the EC2 instance
     }
 
     stages {
