@@ -19,7 +19,7 @@ for FOLDER in $BASE_DIR; do
   fi
 
   # Extract the correct file prefix by removing '-signuture' from the path
-  FILENAME_PREFIX=$(basename "$TG_SOLUTIONS_DIR" | sed 's/-signuture//g')
+  FILENAME_PREFIX=$(basename "$TG_SOLUTIONS_DIR" | sed 's/-signed//g')
 
   # Define the files to verify
   SIG_FILE="${FILENAME_PREFIX}.sig"
