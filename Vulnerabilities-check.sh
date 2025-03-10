@@ -15,8 +15,9 @@ mkdir -p "$EXTRACT_DIR"
 get_latest_version() {
     echo "Fetching list of versions from S3..."
     s3cmd ls "s3://$S3_BUCKET/$S3_PREFIX" -c "$S3_CONFIG" | \
-    grep -oP "tg-solutions-v(\d+\.\d+\.\d+)-binaries-signed\.tgz" | \
-    sort -V | tail -n 1 | grep -oP "\d+\.\d+\.\d+"
+    grep -oE "tg-solutions-v3\.36\.[0-9]+-binaries-signed\.tgz" | \
+    grep -oE "3\.36\.[0-9]+" | \
+    sort -V | tail -n 1 
 }
 
 # Function to download and extract the latest version
