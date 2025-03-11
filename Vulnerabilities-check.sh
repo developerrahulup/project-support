@@ -22,7 +22,7 @@ get_latest_version() {
 
 # Function to download and extract the latest version
 download_and_extract() {
-    local version="$1"
+    local version=$(get_latest_version)
     local file_name="tg-solutions-v$version-binaries-signed.tgz"
     local s3_key="$S3_PREFIX$file_name"
     local local_path="$DOWNLOAD_DIR/$file_name"
