@@ -24,7 +24,7 @@ get_latest_version() {
 download_and_extract() {
     local version=$(get_latest_version)
     local file_name="tg-solutions-v$version-binaries-signed.tgz"
-    local s3_key="$S3_PREFIX$file_name"
+    local s3_key="tg-solutions-binaries/$file_name"
     local local_path="$DOWNLOAD_DIR/$file_name"
 
     echo "Downloading $s3_key..."
